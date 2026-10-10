@@ -54,6 +54,25 @@
 	Document properties…	Vlastnosti dokumentu…
 	Export to image…	Exportovat jako obrázek…
 	Reduce file size…	Zmenšit velikost souboru…
+	Smallest	Nejmenší
+	Balanced	Vyvážený
+	High quality	Vysoká kvalita
+	For email and screens	Pro e-mail a obrazovku
+	Good for most documents	Vhodný pro většinu dokumentů
+	For printing	Pro tisk
+	Images at 100 ppi, lower quality	Obrázky se 100 ppi, nižší kvalita
+	Images at 150 ppi, medium quality	Obrázky se 150 ppi, střední kvalita
+	Images at 225 ppi, high quality	Obrázky s 225 ppi, vysoká kvalita
+	{name} · {size} now	{name} · nyní {size}
+	Advanced…	Pokročilé…
+	Reduce	Zmenšit
+	Still over 25 MB, the usual email limit.	Stále přes 25 MB, obvyklý limit e-mailu.
+	Still over 25 MB, the usual email limit. Try Smallest.	Stále přes 25 MB, obvyklý limit e-mailu. Zkuste „Nejmenší“.
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} obrázek zůstal beze změny: PdfCraft zatím neumí jeho formát znovu zkomprimovat.|{n} obrázky zůstaly beze změny: PdfCraft zatím neumí jejich formát znovu zkomprimovat.|{n} obrázků zůstalo beze změny: PdfCraft zatím neumí jejich formát znovu zkomprimovat.
+	estimating…	odhaduje se…
+	about {size}	asi {size}
+	no smaller	nebude menší
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	Tato volba soubor nezmenší ({size}). Žádná kopie nebyla uložena.
 	This file is already as small as it can be made ({size}). No copy was saved.	Soubor je už tak malý, jak to jde ({size}). Žádná kopie nebyla uložena.
 	Saved {place}: {before} → {after} (not smaller){detail}	Uloženo {place}: {before} → {after} (není menší){detail}
 	Optimize PDF…	Optimalizovat PDF…

@@ -247,6 +247,25 @@
 	Fill & Sign: initials	Заполнить и подписать: инициалы
 	Export to image…	Экспортировать в изображение…
 	Reduce file size…	Уменьшить размер файла…
+	Smallest	Наименьший
+	Balanced	Сбалансированный
+	High quality	Высокое качество
+	For email and screens	Для почты и экрана
+	Good for most documents	Подходит для большинства документов
+	For printing	Для печати
+	Images at 100 ppi, lower quality	Изображения 100 ppi, качество ниже
+	Images at 150 ppi, medium quality	Изображения 150 ppi, среднее качество
+	Images at 225 ppi, high quality	Изображения 225 ppi, высокое качество
+	{name} · {size} now	{name} · сейчас {size}
+	Advanced…	Дополнительно…
+	Reduce	Уменьшить
+	Still over 25 MB, the usual email limit.	Всё ещё больше 25 МБ — обычного ограничения почты.
+	Still over 25 MB, the usual email limit. Try Smallest.	Всё ещё больше 25 МБ — обычного ограничения почты. Попробуйте «Наименьший».
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} изображение оставлено как есть: PdfCraft пока не умеет пересжимать его формат.|{n} изображения оставлены как есть: PdfCraft пока не умеет пересжимать их формат.|{n} изображений оставлено как есть: PdfCraft пока не умеет пересжимать их формат.
+	estimating…	оценка…
+	about {size}	около {size}
+	no smaller	не меньше
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	Этот вариант не уменьшит файл ({size}). Копия не сохранена.
 	Optimize PDF…	Оптимизировать PDF…
 	Export to text…	Экспортировать в текст…
 	Export to Word…	Экспортировать в Word…

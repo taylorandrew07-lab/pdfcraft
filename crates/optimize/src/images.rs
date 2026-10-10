@@ -244,25 +244,30 @@ fn image_stream(old: &Dict, px: &[u8], n: usize, w: u32, h: u32, compression: Co
     }
 }
 
+/// Whether PdfCraft can decode an image (`n` components) faithfully and so recompress it: not
+/// masks, decode arrays other than the default, more or fewer than 8 bits, other codecs than
+/// JPEG and the lossless ones, or more than [`MAX_PIXELS`].
+fn supported(doc: &Document, s: &Stream, n: usize) -> bool {
+    let d = &s.dict;
+    let size = d.int(b"Width").zip(d.int(b"Height")).and_then(|(w, h)| u64::try_from(w).ok().zip(u64::try_from(h).ok()));
+    !(d.get(b"Decode").is_some_and(|a| !is_identity_decode(doc, a, n))
+        || d.contains(b"Mask")
+        || d.name(b"ImageMask").is_some()
+        || matches!(d.get(b"ImageMask"), Some(Object::Bool(true))))
+        && d.int(b"BitsPerComponent") == Some(8)
+        && is_dct(s).is_some()
+        && size.is_some_and(|(w, h)| w > 0 && h > 0 && w.saturating_mul(h) <= MAX_PIXELS)
+}
+
 /// One image: resample and/or recompress per `settings`; `ppi` is its effective resolution.
 /// Returns the new image and its new soft mask, if the result is smaller.
 fn process(doc: &Document, s: &Stream, ppi: f64, settings: &ImageSettings, n: usize) -> Option<(Stream, Option<(ObjRef, Stream)>)> {
     let d = &s.dict;
-    if d.get(b"Decode").is_some_and(|a| !is_identity_decode(doc, a, n))
-        || d.contains(b"Mask")
-        || d.name(b"ImageMask").is_some()
-        || matches!(d.get(b"ImageMask"), Some(Object::Bool(true)))
-    {
-        return None;
-    }
-    if d.int(b"BitsPerComponent") != Some(8) {
+    if !supported(doc, s, n) {
         return None;
     }
     let was_dct = is_dct(s)?;
     let (w, h) = (d.int(b"Width")? as u32, d.int(b"Height")? as u32);
-    if w == 0 || h == 0 || (w as u64) * (h as u64) > MAX_PIXELS {
-        return None;
-    }
     let resize = settings.downsample && ppi.is_finite() && ppi > settings.above_ppi && settings.target_ppi > 0.0;
     let recompress = matches!(settings.compression, Compression::Jpeg(_)) || (matches!(settings.compression, Compression::Flate) && was_dct);
     if !resize && !recompress {
@@ -331,7 +336,10 @@ pub(crate) fn run(
         let obj = doc.get(r);
         let Object::Stream(s) = &*obj else { continue };
         report.images += 1;
-        let Some(n) = s.dict.get(b"ColorSpace").and_then(|cs| components(doc, cs)) else { continue };
+        let Some(n) = s.dict.get(b"ColorSpace").and_then(|cs| components(doc, cs)).filter(|n| supported(doc, s, *n)) else {
+            report.images_unsupported += 1;
+            continue;
+        };
         let st = if n == 1 { &settings.gray } else { &settings.color };
         let Some((new, smask)) = process(doc, s, ppi, st, n) else { continue };
         let resized = new.dict.int(b"Width") != s.dict.int(b"Width") || new.dict.int(b"Height") != s.dict.int(b"Height");

@@ -8,8 +8,8 @@
 use std::sync::{Arc, Mutex};
 
 use egui::{Align, Layout};
-use pdfcraft_engine::optimize::{Compression, ImageSettings, QUALITIES, Settings};
-use pdfcraft_engine::optimizer::{OptimizeStage, Optimized};
+use pdfcraft_engine::optimize::{Compression, ImageSettings, QUALITIES, ReducePreset, Settings};
+use pdfcraft_engine::optimizer::{OptimizeJob, OptimizeStage, Optimized};
 use pdfcraft_engine::{DocId, EditError, Hidden, OptimizeReport};
 
 use crate::theme::{self, Tokens};
@@ -52,8 +52,8 @@ pub struct OptimizeProgress {
 /// Optimizer's notice lists what it did.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OptimizeKind {
-    /// Reduce File Size (Acrobat's defaults).
-    Reduce,
+    /// Reduce File Size with one of its choices.
+    Reduce(ReducePreset),
     /// Optimize PDF ▸ Advanced optimization (the dialog's choices).
     Advanced,
 }
@@ -62,7 +62,7 @@ impl OptimizeKind {
     /// The suffix of the saved copy's name ("notes (reduced).pdf").
     pub(crate) fn suffix(self) -> &'static str {
         match self {
-            OptimizeKind::Reduce => "reduced",
+            OptimizeKind::Reduce(_) => "reduced",
             OptimizeKind::Advanced => "optimized",
         }
     }
@@ -227,6 +227,274 @@ pub(crate) fn body(ui: &mut egui::Ui, d: &mut OptimizeDraft, t: &Tokens) -> (boo
     (ok, cancel)
 }
 
+/// What the Reduce file size dialog was asked to do.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ReduceAction {
+    Reduce,
+    /// Open the PDF Optimizer with the chosen preset's settings.
+    Advanced,
+    Cancel,
+}
+
+/// A choice's name, what it is for, and what it does.
+fn preset_text(p: ReducePreset) -> (&'static str, &'static str, &'static str) {
+    match p {
+        ReducePreset::Smallest => ("Smallest", "For email and screens", "Images at 100 ppi, lower quality"),
+        ReducePreset::Balanced => ("Balanced", "Good for most documents", "Images at 150 ppi, medium quality"),
+        ReducePreset::HighQuality => ("High quality", "For printing", "Images at 225 ppi, high quality"),
+    }
+}
+
+/// Reduce file size: the document's size now, the three choices (with their estimated sizes,
+/// `None` where there are no estimates) and Advanced….
+pub(crate) fn reduce_body(
+    ui: &mut egui::Ui,
+    preset: &mut ReducePreset,
+    name: &str,
+    size: usize,
+    estimates: Option<[Estimate; 3]>,
+    t: &Tokens,
+) -> Option<ReduceAction> {
+    ui.label(egui::RichText::new(tl!("Reduce file size")).font(theme::semibold(18.0)));
+    ui.add_space(4.0);
+    let now = crate::i18n::fmt(tl!("{name} · {size} now"), &[("name", name), ("size", &crate::panels::human_size(size))]);
+    ui.label(egui::RichText::new(now).color(t.text_muted));
+    ui.add_space(10.0);
+    for (i, p) in ReducePreset::ALL.into_iter().enumerate() {
+        let (label, purpose, detail) = preset_text(p);
+        ui.horizontal(|ui| {
+            ui.radio_value(preset, p, egui::RichText::new(tl!(label)).strong());
+            let estimate = match estimates.as_ref().and_then(|e| e.get(i)) {
+                Some(Estimate::Pending) => tl!("estimating…").to_string(),
+                Some(Estimate::Size(n)) if *n < size => crate::i18n::fmt(tl!("about {size}"), &[("size", &crate::panels::human_size(*n))]),
+                Some(Estimate::Size(_)) => tl!("no smaller").to_string(),
+                Some(Estimate::Failed) | None => String::new(),
+            };
+            ui.with_layout(Layout::right_to_left(Align::Center), |ui| ui.label(egui::RichText::new(estimate).color(t.text_muted)));
+        });
+        ui.indent(("reduce-preset", p.id()), |ui| {
+            ui.label(tl!(purpose));
+            ui.label(egui::RichText::new(tl!(detail)).small().color(t.text_muted));
+        });
+        ui.add_space(6.0);
+    }
+    ui.add_space(12.0);
+    let mut action = None;
+    ui.horizontal(|ui| {
+        if widgets::pill_button(ui, tl!("Advanced…"), false).clicked() {
+            action = Some(ReduceAction::Advanced);
+        }
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            if widgets::pill_button(ui, tl!("Reduce"), true).clicked() {
+                action = Some(ReduceAction::Reduce);
+            }
+            if widgets::pill_button(ui, tl!("Cancel"), false).clicked() {
+                action = Some(ReduceAction::Cancel);
+            }
+        });
+    });
+    action
+}
+
+/// One choice's estimate in the Reduce file size dialog.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Estimate {
+    Pending,
+    /// The reduced copy's size in bytes.
+    Size(usize),
+    Failed,
+}
+
+/// Up to this size the estimated copies are kept, so Reduce saves the chosen one at once; larger
+/// documents keep only the sizes (Reduce then reduces again), to bound memory.
+const KEEP_ESTIMATES: usize = 64 << 20;
+
+/// Above this size no estimates are made: three reductions of a very large file take long and
+/// need a lot of memory, while the dialog is often open only for a moment.
+const ESTIMATE_UP_TO: usize = 256 << 20;
+
+/// What the estimate worker has found so far.
+#[derive(Default)]
+pub struct EstimateProgress {
+    /// Per choice, in [`ReducePreset::ALL`] order: the size, or `None` if it failed.
+    sizes: [Option<Option<usize>>; 3],
+    /// The copies themselves, when kept.
+    kept: [Option<Optimized>; 3],
+    cancel: bool,
+    /// The worker hasn't finished (it notices `cancel` only between the steps of a reduction).
+    running: bool,
+}
+
+/// Reduce file size's estimates for one version of a document, computed in the background.
+pub struct ReduceEstimates {
+    doc: DocId,
+    /// The document's edit generation they were made for: after an edit they are stale.
+    generation: u64,
+    progress: Arc<Mutex<EstimateProgress>>,
+    /// Still offered to the dialog. Stopped estimates are kept only while their worker
+    /// finishes, so that a second worker never starts beside it.
+    live: bool,
+}
+
+impl ReduceEstimates {
+    /// The estimates for document `doc` as of `generation`, in [`ReducePreset::ALL`] order:
+    /// `None` when these are stopped, or for another document or version.
+    pub(crate) fn current(&self, doc: DocId, generation: u64) -> Option<[Estimate; 3]> {
+        if !self.is_for(doc, generation) {
+            return None;
+        }
+        let Ok(s) = self.progress.lock() else { return Some([Estimate::Failed; 3]) };
+        Some(s.sizes.map(|size| match size {
+            None => Estimate::Pending,
+            Some(Some(n)) => Estimate::Size(n),
+            Some(None) => Estimate::Failed,
+        }))
+    }
+
+    /// Live estimates for document `doc` as of `generation`.
+    pub(crate) fn is_for(&self, doc: DocId, generation: u64) -> bool {
+        self.live && self.doc == doc && self.generation == generation
+    }
+
+    /// Still offered to the dialog.
+    pub fn live(&self) -> bool {
+        self.live
+    }
+
+    fn running(&self) -> bool {
+        self.progress.lock().is_ok_and(|s| s.running)
+    }
+}
+
+/// Reduce the document with each job (an index into [`ReducePreset::ALL`] and the job) in turn,
+/// recording the sizes (and the copies, if `keep`), until cancelled.
+fn estimate(progress: &Mutex<EstimateProgress>, jobs: Vec<(usize, OptimizeJob)>, keep: bool, ctx: Option<&egui::Context>) {
+    for (i, job) in jobs {
+        let result = job.run(|_| progress.lock().is_ok_and(|s| !s.cancel));
+        let Ok(mut s) = progress.lock() else { return };
+        if s.cancel {
+            return;
+        }
+        match result {
+            Ok((bytes, report)) => {
+                if let Some(size) = s.sizes.get_mut(i) {
+                    *size = Some(Some(bytes.len()));
+                }
+                if keep && let Some(k) = s.kept.get_mut(i) {
+                    *k = Some((bytes, report));
+                }
+            }
+            Err(_) => {
+                if let Some(size) = s.sizes.get_mut(i) {
+                    *size = Some(None);
+                }
+            }
+        }
+        drop(s);
+        if let Some(ctx) = ctx {
+            ctx.request_repaint();
+        }
+    }
+}
+
+impl PdfCraftApp {
+    /// Start estimating the three choices for the active document as it is now (not on the web,
+    /// which has no worker threads, and not for very large files). Replaces earlier estimates;
+    /// while a stopped worker is still finishing, none are started.
+    pub(crate) fn start_reduce_estimates(&mut self) {
+        self.stop_reduce_estimates();
+        if cfg!(target_arch = "wasm32") || self.reduce_estimates.is_some() {
+            return;
+        }
+        let Some((_, id)) = self.active_ids() else { return };
+        let Some(doc) = self.session.get(id) else { return };
+        let (size, generation) = (doc.bytes.len(), doc.edit_generation());
+        if size > ESTIMATE_UP_TO {
+            return;
+        }
+        // The preselected choice first: it is the likeliest to be reduced.
+        let first = self.reduce_preset;
+        let order = std::iter::once(first).chain(ReducePreset::ALL.into_iter().filter(|p| *p != first));
+        let jobs: Vec<(usize, OptimizeJob)> = order
+            .filter_map(|p| {
+                let i = ReducePreset::ALL.iter().position(|q| *q == p)?;
+                self.session.optimize_job(id, &Settings::reduce(p), &[]).ok().map(|job| (i, job))
+            })
+            .collect();
+        // A document Reduce refuses (signed, read-only) shows no estimates.
+        if jobs.len() != ReducePreset::ALL.len() {
+            return;
+        }
+        let progress = Arc::new(Mutex::new(EstimateProgress { running: true, ..EstimateProgress::default() }));
+        let (p, ctx, keep) = (progress.clone(), self.ctx.clone(), size <= KEEP_ESTIMATES);
+        let work = move || {
+            estimate(&p, jobs, keep, ctx.as_ref());
+            if let Ok(mut s) = p.lock() {
+                s.running = false;
+            }
+        };
+        #[cfg(target_arch = "wasm32")]
+        drop(work);
+        #[cfg(not(target_arch = "wasm32"))]
+        if self.run_inline {
+            work();
+        } else if std::thread::Builder::new().name("pdfcraft-reduce-estimates".into()).spawn(work).is_err() {
+            // No worker: no estimates, Reduce still works.
+            return;
+        }
+        self.reduce_estimates = Some(ReduceEstimates { doc: id, generation, progress, live: true });
+    }
+
+    /// Stop the estimate worker and drop what it found. The entry stays, no longer live, until
+    /// the worker has finished.
+    pub(crate) fn stop_reduce_estimates(&mut self) {
+        let Some(e) = self.reduce_estimates.as_mut() else { return };
+        e.live = false;
+        if let Ok(mut s) = e.progress.lock() {
+            s.cancel = true;
+            s.kept = Default::default();
+        }
+        if !e.running() {
+            self.reduce_estimates = None;
+        }
+    }
+
+    /// The estimated copy for `preset` of document `id`, if it is ready, was kept, and the
+    /// document hasn't changed since.
+    pub(crate) fn take_reduce_estimate(&mut self, id: DocId, preset: ReducePreset) -> Option<Optimized> {
+        let generation = self.session.get(id)?.edit_generation();
+        let e = self.reduce_estimates.as_ref().filter(|e| e.is_for(id, generation))?;
+        let i = ReducePreset::ALL.iter().position(|p| *p == preset)?;
+        e.progress.lock().ok()?.kept.get_mut(i)?.take()
+    }
+}
+
+/// Above this a copy is likely too big to email: 25 MB is a common attachment limit.
+pub(crate) const EMAIL_LIMIT: usize = 25 << 20;
+
+/// What the saved notice adds for Reduce file size: images left as they are, and a hint when the
+/// file is still too big to email (the copy, or the original when the copy isn't smaller and so
+/// isn't saved). Starts with ". " when not empty.
+pub(crate) fn reduce_detail(r: &OptimizeReport, after: usize, before: usize, preset: ReducePreset) -> String {
+    let mut parts = Vec::new();
+    let unsupported = r.optimize.images_unsupported as u64;
+    if unsupported > 0 {
+        parts.push(crate::i18n::trn(
+            crate::i18n::current(),
+            unsupported,
+            "{n} image was left as it is: PdfCraft can't recompress its format yet.",
+            "{n} images were left as they are: PdfCraft can't recompress their format yet.",
+        ));
+    }
+    if after.min(before) > EMAIL_LIMIT {
+        parts.push(match preset {
+            ReducePreset::Smallest => tl!("Still over 25 MB, the usual email limit.").to_string(),
+            _ => tl!("Still over 25 MB, the usual email limit. Try Smallest.").to_string(),
+        });
+    }
+    if parts.is_empty() { String::new() } else { format!(". {}", parts.join(" ")) }
+}
+
 /// Audit Space Usage: bytes and share of the file per kind of content.
 pub(crate) fn audit_body(ui: &mut egui::Ui, rows: &[pdfcraft_engine::optimize::SpaceUse], t: &Tokens) -> bool {
     ui.label(egui::RichText::new(tl!("Space Audit")).font(crate::theme::semibold(18.0)));
@@ -349,7 +617,13 @@ impl PdfCraftApp {
             Err(EditError::Cancelled) => self.notify_tr("Optimization cancelled"),
             result => {
                 let result = result.map(|(b, r)| {
-                    let detail = if kind == OptimizeKind::Advanced { summary(&r) } else { String::new() };
+                    let detail = match kind {
+                        OptimizeKind::Advanced => summary(&r),
+                        OptimizeKind::Reduce(preset) => {
+                            let before = self.session.get(doc).map_or(0, |d| d.bytes.len());
+                            reduce_detail(&r, b.len(), before, preset)
+                        }
+                    };
                     (b, detail)
                 });
                 self.save_optimized(doc, kind, result);
@@ -364,6 +638,26 @@ mod tests {
     use egui_kittest::kittest::Queryable;
 
     use super::*;
+
+    #[test]
+    fn the_reduce_notice_says_what_was_left_and_when_email_may_refuse_it() {
+        crate::i18n::set_current(crate::i18n::Lang::EN);
+        let mut r = OptimizeReport::default();
+        let big = EMAIL_LIMIT * 2;
+        assert_eq!(reduce_detail(&r, 1 << 20, big, ReducePreset::Balanced), "");
+        r.optimize.images_unsupported = 1;
+        assert_eq!(reduce_detail(&r, 1 << 20, big, ReducePreset::Balanced), ". 1 image was left as it is: PdfCraft can't recompress its format yet.");
+        r.optimize.images_unsupported = 3;
+        assert_eq!(
+            reduce_detail(&r, EMAIL_LIMIT + 1, big, ReducePreset::Balanced),
+            ". 3 images were left as they are: PdfCraft can't recompress their format yet. Still over 25 MB, the usual email limit. Try Smallest."
+        );
+        r.optimize.images_unsupported = 0;
+        assert_eq!(reduce_detail(&r, EMAIL_LIMIT, big, ReducePreset::HighQuality), "", "25 MB itself is fine");
+        assert_eq!(reduce_detail(&r, EMAIL_LIMIT + 1, big, ReducePreset::Smallest), ". Still over 25 MB, the usual email limit.");
+        // A copy that isn't smaller isn't saved: the original, under the limit, is what's left.
+        assert_eq!(reduce_detail(&r, EMAIL_LIMIT + 1, EMAIL_LIMIT - 1, ReducePreset::Balanced), "");
+    }
 
     #[test]
     fn the_progress_card_shows_the_stage_and_cancels() {
@@ -407,7 +701,7 @@ mod tests {
         app.set_option("language", "en").unwrap();
         app.open_bytes("notes.txt", None, b"hello".to_vec()).unwrap();
         let (_, doc) = app.active_ids().unwrap();
-        app.optimize_run = Some(OptimizeRun { doc, kind: OptimizeKind::Reduce, progress: Arc::default() });
+        app.optimize_run = Some(OptimizeRun { doc, kind: OptimizeKind::Reduce(ReducePreset::Balanced), progress: Arc::default() });
         app.optimize_with_draft();
         assert_eq!(app.toast.as_ref().map(|t| t.0.as_str()), Some("Optimization is already running"));
     }

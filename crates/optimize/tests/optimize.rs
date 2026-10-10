@@ -583,3 +583,39 @@ fn nothing_is_dropped_when_a_stream_cannot_be_checked() {
         assert_eq!(build(s), kept, "{dict:?}");
     }
 }
+
+#[test]
+fn reduce_presets_choose_the_resolution_and_count_images_left_alone() {
+    use pdfcraft_optimize::ReducePreset;
+    let build = || {
+        let mut doc = Document::new_empty();
+        // 1200 px drawn 144 pt (2 in) wide → 600 ppi.
+        let photo = image(&mut doc, 1200, 1200, 3, false, None);
+        // Formats PdfCraft can't recompress yet: CMYK, and 1 bit per pixel.
+        let cmyk = image(&mut doc, 200, 200, 3, false, None);
+        let mut cmyk = stream(&doc, cmyk);
+        cmyk.dict.set(b"ColorSpace".to_vec(), Object::name("DeviceCMYK"));
+        let cmyk = doc.add(Object::Stream(cmyk));
+        let mono = image(&mut doc, 200, 200, 1, false, None);
+        let mut mono = stream(&doc, mono);
+        mono.dict.set(b"BitsPerComponent".to_vec(), Object::Int(1));
+        let mono = doc.add(Object::Stream(mono));
+        page(
+            &mut doc,
+            &[("P", photo), ("C", cmyk), ("M", mono)],
+            "q 144 0 0 144 0 0 cm /P Do Q q 144 0 0 144 0 200 cm /C Do Q q 144 0 0 144 200 0 cm /M Do Q",
+        );
+        (doc, photo)
+    };
+    let mut sizes = Vec::new();
+    for preset in ReducePreset::ALL {
+        let (mut doc, photo) = build();
+        let report = optimize(&mut doc, &Settings::reduce(preset)).unwrap();
+        assert_eq!(report.images_unsupported, 2, "{preset:?}: {report:?}");
+        sizes.push(stream(&doc, photo).dict.int(b"Width").unwrap());
+        assert_eq!(ReducePreset::from_id(preset.id()), Some(preset));
+    }
+    assert_eq!(sizes, [200, 300, 450], "100, 150 and 225 ppi");
+    assert_eq!(Settings::reduce(ReducePreset::Balanced), Settings::default(), "Balanced is today's Reduce");
+    assert_eq!(ReducePreset::default(), ReducePreset::Balanced);
+}

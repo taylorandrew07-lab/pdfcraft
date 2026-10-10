@@ -220,10 +220,29 @@ impl PdfCraftApp {
         }
     }
 
-    /// Reduce File Size: write a compacted copy with images downsampled (the open document is
-    /// unchanged). It runs in the background with a progress bar, like the PDF Optimizer.
+    /// Reduce File Size: ask which of its choices to use (the last one is preselected).
     pub(crate) fn reduce_file_size(&mut self) {
-        self.start_optimize(crate::optimize_ui::OptimizeKind::Reduce, &pdfcraft_engine::optimize::Settings::default(), &[]);
+        // What's typed in a form field is part of the document (#166), and of the estimates.
+        if self.active_ids().is_some() && self.commit_form_typing() {
+            self.dialog = Some(crate::Dialog::Reduce);
+            self.start_reduce_estimates();
+        }
+    }
+
+    /// Write a compacted copy with `preset`'s images (the open document is unchanged). It runs in
+    /// the background with a progress bar, like the PDF Optimizer.
+    pub(crate) fn reduce_with(&mut self, preset: pdfcraft_engine::optimize::ReducePreset) {
+        self.reduce_preset = preset;
+        // The dialog's estimate is that very copy: save it rather than reduce again.
+        let ready = self.active_ids().and_then(|(_, id)| self.take_reduce_estimate(id, preset).map(|r| (id, r)));
+        self.stop_reduce_estimates();
+        if let Some((id, (bytes, report))) = ready {
+            let before = self.session.get(id).map_or(0, |d| d.bytes.len());
+            let detail = crate::optimize_ui::reduce_detail(&report, bytes.len(), before, preset);
+            self.save_optimized(id, crate::optimize_ui::OptimizeKind::Reduce(preset), Ok((bytes, detail)));
+            return;
+        }
+        self.start_optimize(crate::optimize_ui::OptimizeKind::Reduce(preset), &pdfcraft_engine::optimize::Settings::reduce(preset), &[]);
     }
 
     /// Save an optimized copy (Reduce File Size, Optimize PDF) next to the original, reporting
@@ -244,11 +263,20 @@ impl PdfCraftApp {
             }
         };
         let after = bytes.len();
-        if kind == crate::optimize_ui::OptimizeKind::Reduce && after >= before {
-            self.notify_fmt(
-                "This file is already as small as it can be made ({size}). No copy was saved.",
-                &[("size", &crate::panels::human_size(before))],
-            );
+        if matches!(kind, crate::optimize_ui::OptimizeKind::Reduce(_)) && after >= before {
+            // Only Smallest can say the file is as small as Reduce can make it.
+            let template = if kind == crate::optimize_ui::OptimizeKind::Reduce(pdfcraft_engine::optimize::ReducePreset::Smallest) {
+                tl!("This file is already as small as it can be made ({size}). No copy was saved.")
+            } else {
+                tl!("This choice wouldn't make the file smaller ({size}). No copy was saved.")
+            };
+            let mut message = crate::i18n::fmt(template, &[("size", &crate::panels::human_size(before))]);
+            // Why, when images were left as they are.
+            if let Some(more) = detail.strip_prefix(". ") {
+                message.push(' ');
+                message.push_str(more);
+            }
+            self.notify(message);
             return;
         }
         let saved = move |app: &mut PdfCraftApp, place: String| {

@@ -1740,6 +1740,25 @@
 	Privacy	Поверителност
 	Export to image…	Експортирай като изображение…
 	Reduce file size…	Намали размера на файла…
+	Smallest	Най-малък
+	Balanced	Балансиран
+	High quality	Високо качество
+	For email and screens	За имейл и екран
+	Good for most documents	Подходящ за повечето документи
+	For printing	За печат
+	Images at 100 ppi, lower quality	Изображения със 100 ppi, по-ниско качество
+	Images at 150 ppi, medium quality	Изображения със 150 ppi, средно качество
+	Images at 225 ppi, high quality	Изображения с 225 ppi, високо качество
+	{name} · {size} now	{name} · сега {size}
+	Advanced…	Разширени…
+	Reduce	Намали
+	Still over 25 MB, the usual email limit.	Все още над 25 MB — обичайния лимит за имейл.
+	Still over 25 MB, the usual email limit. Try Smallest.	Все още над 25 MB — обичайния лимит за имейл. Опитайте „Най-малък“.
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} изображение е оставено както е: PdfCraft все още не може да компресира наново формата му.|{n} изображения са оставени както са: PdfCraft все още не може да компресира наново формата им.
+	estimating…	оценява се…
+	about {size}	около {size}
+	no smaller	не по-малък
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	Този избор няма да направи файла по-малък ({size}). Не е записано копие.
 	Optimize PDF…	Оптимизирай PDF…
 	Export to text…	Експортирай като текст…
 	Export to Word…	Експортирай в Word…

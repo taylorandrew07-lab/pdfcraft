@@ -274,6 +274,8 @@ pub enum Dialog {
     Sign,
     /// Optimize PDF ▸ Advanced optimization.
     Optimize,
+    /// Reduce file size (its three choices).
+    Reduce,
     /// Prepare a form ▸ right-click a field ▸ Duplicate.
     DuplicateField,
     /// Check for accessibility ▸ Accessibility Checker Options.
@@ -541,8 +543,12 @@ pub struct PdfCraftApp {
     pub stamp_draft: stamps_ui::StampDraft,
     /// PDF Optimizer choices.
     pub optimize_draft: OptimizeDraft,
+    /// Reduce file size's last choice (remembered).
+    pub reduce_preset: pdfcraft_engine::optimize::ReducePreset,
     /// The running optimization (Optimize PDF ▸ Advanced optimization).
     pub optimize_run: Option<optimize_ui::OptimizeRun>,
+    /// Reduce file size's estimates, computed in the background while its dialog is open.
+    pub reduce_estimates: Option<optimize_ui::ReduceEstimates>,
     /// A background job's progress card (see [`widgets::progress_notice`]).
     pub progress_notice: Option<widgets::ProgressNotice>,
     /// Pages copied or cut in Organize Pages, ready to paste (into any document).
@@ -792,7 +798,9 @@ impl PdfCraftApp {
             custom_stamps: Vec::new(),
             stamp_draft: Default::default(),
             optimize_draft: OptimizeDraft::default(),
+            reduce_preset: pdfcraft_engine::optimize::ReducePreset::default(),
             optimize_run: None,
+            reduce_estimates: None,
             progress_notice: None,
             page_clipboard: None,
             grid_drop: None,
@@ -1408,6 +1416,7 @@ impl PdfCraftApp {
             "combine_view": self.combine_view.as_str(),
             "combine_zoom": self.combine_zoom,
             "comments_panel_closed": self.comments_panel_closed,
+            "reduce_preset": self.reduce_preset.id(),
         })
         .to_string()
     }
@@ -1444,6 +1453,9 @@ impl PdfCraftApp {
         }
         if let Some(on) = v["highlight_fields"].as_bool() {
             self.view_defaults.highlight_fields = on;
+        }
+        if let Some(p) = v["reduce_preset"].as_str().and_then(pdfcraft_engine::optimize::ReducePreset::from_id) {
+            self.reduce_preset = p;
         }
         if let Some(closed) = v["comments_panel_closed"].as_bool() {
             self.comments_panel_closed = closed;
@@ -1579,6 +1591,10 @@ impl PdfCraftApp {
                 self.default_mode = Mode::parse(value).ok_or("default-mode must be all, read, edit, convert or sign")?;
             }
             ("date-format", _) => self.session.set_date_format(value)?,
+            ("reduce-preset", _) => {
+                self.reduce_preset =
+                    pdfcraft_engine::optimize::ReducePreset::from_id(value).ok_or("reduce-preset must be smallest, balanced or high-quality")?;
+            }
             ("date-language", _) => self.session.set_date_language(Some(value).filter(|v| *v != "auto"))?,
             ("tool", _) => {
                 let g = pdfcraft_engine::catalog::group(value).ok_or_else(|| format!("unknown tool {value}"))?;
@@ -1613,6 +1629,11 @@ impl PdfCraftApp {
                     "pdfa" => Some(Dialog::PdfA),
                     "signature" => Some(Dialog::Signature),
                     "optimize" => Some(Dialog::Optimize),
+                    "reduce" => {
+                        // Same path as the menu, so the estimates start.
+                        self.reduce_file_size();
+                        self.dialog
+                    }
                     "sign" | "certify" => {
                         // Sign with a Digital ID for an invisible signature on the current page.
                         let page = self.active.map_or(0, |i| self.views[i].current);

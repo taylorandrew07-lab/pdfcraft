@@ -249,6 +249,25 @@
 	Fill & Sign: initials	Wypełnij i podpisz: inicjały
 	Export to image…	Eksportuj do obrazu…
 	Reduce file size…	Zmniejsz rozmiar pliku…
+	Smallest	Najmniejszy
+	Balanced	Zrównoważony
+	High quality	Wysoka jakość
+	For email and screens	Do poczty e-mail i na ekran
+	Good for most documents	Dobry dla większości dokumentów
+	For printing	Do druku
+	Images at 100 ppi, lower quality	Obrazy 100 ppi, niższa jakość
+	Images at 150 ppi, medium quality	Obrazy 150 ppi, średnia jakość
+	Images at 225 ppi, high quality	Obrazy 225 ppi, wysoka jakość
+	{name} · {size} now	{name} · teraz {size}
+	Advanced…	Zaawansowane…
+	Reduce	Zmniejsz
+	Still over 25 MB, the usual email limit.	Nadal ponad 25 MB, typowy limit poczty e-mail.
+	Still over 25 MB, the usual email limit. Try Smallest.	Nadal ponad 25 MB, typowy limit poczty e-mail. Spróbuj „Najmniejszy”.
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} obraz pozostawiono bez zmian: PdfCraft nie umie jeszcze ponownie skompresować jego formatu.|{n} obrazy pozostawiono bez zmian: PdfCraft nie umie jeszcze ponownie skompresować ich formatu.|{n} obrazów pozostawiono bez zmian: PdfCraft nie umie jeszcze ponownie skompresować ich formatu.
+	estimating…	szacowanie…
+	about {size}	około {size}
+	no smaller	nie mniejszy
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	Ten wybór nie zmniejszy pliku ({size}). Nie zapisano kopii.
 	Optimize PDF…	Optymalizuj PDF…
 	Export to text…	Eksportuj do tekstu…
 	Export to Word…	Eksportuj do Worda…
@@ -1489,6 +1508,8 @@
 	Right Edge	Prawa krawędź
 	Language	Język
 	Saved {place}: {before} → {after} ({pct}% smaller){detail}	Zapisano {place}: {before} → {after} (o {pct}% mniej){detail}
+	This file is already as small as it can be made ({size}). No copy was saved.	Ten plik jest już tak mały, jak to możliwe ({size}). Nie zapisano kopii.
+	Saved {place}: {before} → {after} (not smaller){detail}	Zapisano {place}: {before} → {after} (nie mniej){detail}
 	Couldn't save the image: {e}	Nie można zapisać obrazu: {e}
 	Adding images arrives on the web with file pickers for images	Dodawanie obrazów w wersji internetowej będzie dostępne wraz z wyborem plików obrazów
 	Replacing images on page {p} arrives on the web with image pickers ({i})	Zastępowanie obrazów na stronie {p} w wersji internetowej będzie dostępne wraz z wyborem obrazów ({i})

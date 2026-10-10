@@ -253,6 +253,25 @@
 	Fill & Sign: initials	入力と署名：イニシャル
 	Export to image…	画像に書き出す…
 	Reduce file size…	ファイルサイズを縮小…
+	Smallest	最小
+	Balanced	バランス
+	High quality	高画質
+	For email and screens	メールや画面表示向け
+	Good for most documents	ほとんどの文書に適しています
+	For printing	印刷向け
+	Images at 100 ppi, lower quality	画像 100 ppi、低めの画質
+	Images at 150 ppi, medium quality	画像 150 ppi、中程度の画質
+	Images at 225 ppi, high quality	画像 225 ppi、高画質
+	{name} · {size} now	{name} · 現在 {size}
+	Advanced…	詳細設定…
+	Reduce	縮小
+	Still over 25 MB, the usual email limit.	まだ 25 MB を超えています（一般的なメールの上限）。
+	Still over 25 MB, the usual email limit. Try Smallest.	まだ 25 MB を超えています（一般的なメールの上限）。「最小」をお試しください。
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} 個の画像はそのままにしました: PdfCraft はその形式をまだ再圧縮できません。
+	estimating…	見積もり中…
+	about {size}	約 {size}
+	no smaller	小さくなりません
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	この設定ではファイルは小さくなりません（{size}）。コピーは保存されませんでした。
 	Optimize PDF…	PDF を最適化…
 	Export to text…	テキストに書き出す…
 	Export to Word…	Word に書き出す…

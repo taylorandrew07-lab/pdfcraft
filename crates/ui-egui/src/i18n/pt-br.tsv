@@ -1614,6 +1614,25 @@
 	Privacy	Privacidade
 	Export to image…	Exportar para imagem…
 	Reduce file size…	Reduzir tamanho do arquivo…
+	Smallest	Menor
+	Balanced	Equilibrado
+	High quality	Alta qualidade
+	For email and screens	Para e-mail e tela
+	Good for most documents	Bom para a maioria dos documentos
+	For printing	Para impressão
+	Images at 100 ppi, lower quality	Imagens a 100 ppi, qualidade menor
+	Images at 150 ppi, medium quality	Imagens a 150 ppi, qualidade média
+	Images at 225 ppi, high quality	Imagens a 225 ppi, alta qualidade
+	{name} · {size} now	{name} · {size} agora
+	Advanced…	Avançado…
+	Reduce	Reduzir
+	Still over 25 MB, the usual email limit.	Ainda acima de 25 MB, o limite comum de e-mail.
+	Still over 25 MB, the usual email limit. Try Smallest.	Ainda acima de 25 MB, o limite comum de e-mail. Experimente "Menor".
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} imagem foi mantida como estava: o PdfCraft ainda não consegue recomprimir o formato dela.|{n} imagens foram mantidas como estavam: o PdfCraft ainda não consegue recomprimir o formato delas.
+	estimating…	estimando…
+	about {size}	cerca de {size}
+	no smaller	não fica menor
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	Esta opção não deixaria o arquivo menor ({size}). Nenhuma cópia foi salva.
 	Optimize PDF…	Otimizar PDF…
 	Export to text…	Exportar para texto…
 	Export to Word…	Exportar para Word…

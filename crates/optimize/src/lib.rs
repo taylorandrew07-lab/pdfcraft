@@ -109,12 +109,61 @@ impl Default for Settings {
     }
 }
 
+impl Settings {
+    /// Reduce File Size with `preset`'s images; everything else as [`Settings::default`].
+    pub fn reduce(preset: ReducePreset) -> Self {
+        let images = preset.images();
+        Self { color: images, gray: images, ..Self::default() }
+    }
+}
+
+/// Reduce File Size's choices, from the smallest file to the best quality.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum ReducePreset {
+    /// For email and screens: images above 150 ppi to 100 ppi, JPEG low quality.
+    Smallest,
+    /// Good for most documents (Acrobat's Reduce File Size): above 225 ppi to 150 ppi, JPEG
+    /// medium quality.
+    #[default]
+    Balanced,
+    /// For printing: above 300 ppi to 225 ppi, JPEG high quality.
+    HighQuality,
+}
+
+impl ReducePreset {
+    pub const ALL: [ReducePreset; 3] = [ReducePreset::Smallest, ReducePreset::Balanced, ReducePreset::HighQuality];
+
+    /// Its name in settings, options and automation.
+    pub fn id(self) -> &'static str {
+        match self {
+            ReducePreset::Smallest => "smallest",
+            ReducePreset::Balanced => "balanced",
+            ReducePreset::HighQuality => "high-quality",
+        }
+    }
+
+    pub fn from_id(id: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|p| p.id() == id)
+    }
+
+    pub fn images(self) -> ImageSettings {
+        match self {
+            ReducePreset::Smallest => ImageSettings { downsample: true, target_ppi: 100.0, above_ppi: 150.0, compression: Compression::Jpeg(45) },
+            ReducePreset::Balanced => ImageSettings::REDUCE,
+            ReducePreset::HighQuality => ImageSettings { downsample: true, target_ppi: 225.0, above_ppi: 300.0, compression: Compression::Jpeg(80) },
+        }
+    }
+}
+
 /// What an optimization did.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Report {
     pub images: usize,
     pub images_resampled: usize,
     pub images_recompressed: usize,
+    /// Images left as they are because PdfCraft can't recompress their format (colour space,
+    /// codec, bit depth, masks, decode arrays) or they are too large to decode.
+    pub images_unsupported: usize,
     /// Encoded image bytes before and after (images that changed).
     pub image_bytes_before: usize,
     pub image_bytes_after: usize,

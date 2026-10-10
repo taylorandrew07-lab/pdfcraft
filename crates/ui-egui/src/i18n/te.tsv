@@ -230,6 +230,25 @@ comment menu	Edit	సవరించు
 	Fill & Sign: initials	నింపడం & సంతకం: పొడి అక్షరాలు
 	Export to image…	చిత్రంగా ఎగుమతి చేయి…
 	Reduce file size…	ఫైల్ పరిమాణాన్ని తగ్గించు…
+	Smallest	అతి చిన్నది
+	Balanced	సమతుల్యం
+	High quality	అధిక నాణ్యత
+	For email and screens	ఇమెయిల్ మరియు స్క్రీన్‌ల కోసం
+	Good for most documents	చాలా పత్రాలకు సరిపోతుంది
+	For printing	ముద్రణ కోసం
+	Images at 100 ppi, lower quality	చిత్రాలు 100 ppi వద్ద, తక్కువ నాణ్యత
+	Images at 150 ppi, medium quality	చిత్రాలు 150 ppi వద్ద, మధ్యస్థ నాణ్యత
+	Images at 225 ppi, high quality	చిత్రాలు 225 ppi వద్ద, అధిక నాణ్యత
+	{name} · {size} now	{name} · ఇప్పుడు {size}
+	Advanced…	అధునాతన…
+	Reduce	తగ్గించు
+	Still over 25 MB, the usual email limit.	ఇప్పటికీ 25 MB కంటే ఎక్కువ, సాధారణ ఇమెయిల్ పరిమితి.
+	Still over 25 MB, the usual email limit. Try Smallest.	ఇప్పటికీ 25 MB కంటే ఎక్కువ, సాధారణ ఇమెయిల్ పరిమితి. "అతి చిన్నది" ప్రయత్నించండి.
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} చిత్రం అలాగే ఉంచబడింది: దాని ఫార్మాట్‌ను PdfCraft ఇంకా మళ్లీ కుదించలేదు.|{n} చిత్రాలు అలాగే ఉంచబడ్డాయి: వాటి ఫార్మాట్‌ను PdfCraft ఇంకా మళ్లీ కుదించలేదు.
+	estimating…	అంచనా వేస్తోంది…
+	about {size}	సుమారు {size}
+	no smaller	చిన్నదిగా కాదు
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	ఈ ఎంపిక ఫైల్‌ను చిన్నదిగా చేయదు ({size}). కాపీ ఏదీ సేవ్ చేయబడలేదు.
 	Optimize PDF…	PDFను ఆప్టిమైజ్ చేయి…
 	Export to text…	టెక్స్ట్‌గా ఎగుమతి చేయి…
 	Export to Word…	Wordగా ఎగుమతి చేయి…

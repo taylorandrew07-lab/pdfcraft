@@ -10,6 +10,10 @@ use crate::{CloseRequest, Dialog, PdfCraftApp, PropsTab, panels::human_size, wid
 const INFO_KEYS: [&str; 4] = ["Title", "Author", "Subject", "Keywords"];
 
 pub fn show(app: &mut PdfCraftApp, ctx: &egui::Context) {
+    // Reduce file size's estimates live only while its dialog is open, however it was closed.
+    if app.dialog != Some(Dialog::Reduce) {
+        app.stop_reduce_estimates();
+    }
     password(app, ctx);
     save_prompt(app, ctx);
     link_prompt(app, ctx);
@@ -50,6 +54,7 @@ pub fn show(app: &mut PdfCraftApp, ctx: &egui::Context) {
     let mut revert_now = false;
     let mut summarize_now = false;
     let mut optimize_now = false;
+    let mut reduce_now = None;
     let mut duplicate_now: Option<Edit> = None;
     let mut replace_now = false;
     let mut open_revision: Option<usize> = None;
@@ -716,6 +721,38 @@ pub fn show(app: &mut PdfCraftApp, ctx: &egui::Context) {
                 }
                 return;
             }
+            Dialog::Reduce => {
+                let Some(doc) = app.active_ids().and_then(|(_, id)| app.session.get(id)) else {
+                    close = true;
+                    return;
+                };
+                let (id, name, size, generation) = (doc.id, doc.name.clone(), doc.bytes.len(), doc.edit_generation());
+                // Estimates for another document, or made before an edit, are dropped.
+                if app.reduce_estimates.as_ref().is_some_and(|e| e.live() && !e.is_for(id, generation)) {
+                    app.stop_reduce_estimates();
+                }
+                let mut preset = app.reduce_preset;
+                let estimates = app.reduce_estimates.as_ref().and_then(|e| e.current(id, generation));
+                if estimates.is_some_and(|e| e.contains(&crate::optimize_ui::Estimate::Pending)) {
+                    ui.ctx().request_repaint_after(std::time::Duration::from_millis(200));
+                }
+                match crate::optimize_ui::reduce_body(ui, &mut preset, &name, size, estimates, &t) {
+                    Some(crate::optimize_ui::ReduceAction::Reduce) => {
+                        reduce_now = Some(preset);
+                        close = true;
+                    }
+                    Some(crate::optimize_ui::ReduceAction::Advanced) => {
+                        // The Optimizer starts from the chosen preset's settings.
+                        app.optimize_draft.settings = pdfcraft_engine::optimize::Settings::reduce(preset);
+                        app.stop_reduce_estimates();
+                        next = Dialog::Optimize;
+                    }
+                    Some(crate::optimize_ui::ReduceAction::Cancel) => close = true,
+                    None => {}
+                }
+                app.reduce_preset = preset;
+                return;
+            }
             Dialog::AuditSpace => {
                 if crate::optimize_ui::audit_body(ui, &app.space_audit, &t) {
                     next = Dialog::Optimize;
@@ -1202,6 +1239,9 @@ pub fn show(app: &mut PdfCraftApp, ctx: &egui::Context) {
     }
     if optimize_now {
         app.optimize_with_draft();
+    }
+    if let Some(preset) = reduce_now {
+        app.reduce_with(preset);
     }
     if let Some(e) = duplicate_now {
         app.duplicate_draft = None;

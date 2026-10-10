@@ -224,6 +224,25 @@
 	Fill & Sign: initials	Kitöltés és aláírás: monogram
 	Export to image…	Exportálás képként…
 	Reduce file size…	Fájlméret csökkentése…
+	Smallest	Legkisebb
+	Balanced	Kiegyensúlyozott
+	High quality	Kiváló minőség
+	For email and screens	E-mailhez és képernyőre
+	Good for most documents	A legtöbb dokumentumhoz jó
+	For printing	Nyomtatáshoz
+	Images at 100 ppi, lower quality	Képek 100 ppi-vel, gyengébb minőség
+	Images at 150 ppi, medium quality	Képek 150 ppi-vel, közepes minőség
+	Images at 225 ppi, high quality	Képek 225 ppi-vel, jó minőség
+	{name} · {size} now	{name} · most {size}
+	Advanced…	Speciális…
+	Reduce	Csökkentés
+	Still over 25 MB, the usual email limit.	Még mindig 25 MB fölött, ami a szokásos e-mail-korlát.
+	Still over 25 MB, the usual email limit. Try Smallest.	Még mindig 25 MB fölött, ami a szokásos e-mail-korlát. Próbálja a „Legkisebb” lehetőséget.
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} kép változatlan maradt: a PdfCraft még nem tudja újratömöríteni a formátumát.|{n} kép változatlan maradt: a PdfCraft még nem tudja újratömöríteni a formátumukat.
+	estimating…	becslés…
+	about {size}	kb. {size}
+	no smaller	nem lesz kisebb
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	Ez a beállítás nem csökkentené a fájlt ({size}). Nem készült másolat.
 	Optimize PDF…	PDF optimalizálása…
 	Export to text…	Exportálás szövegként…
 	Export to Word…	Exportálás Wordbe…

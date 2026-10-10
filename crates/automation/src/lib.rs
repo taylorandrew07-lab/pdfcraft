@@ -308,13 +308,36 @@ impl Automation {
                 let id = self.doc(&a)?.id;
                 let before = self.doc(&a)?.bytes.len();
                 let path = self.resolve(a.str("path")?, true)?;
-                let (bytes, merged) = self.session.reduced_bytes(id).map_err(failed)?;
+                let preset = match a.opt_str("preset")? {
+                    None => pdfcraft_engine::optimize::ReducePreset::default(),
+                    Some(p) => pdfcraft_engine::optimize::ReducePreset::from_id(p)
+                        .ok_or_else(|| ToolError::InvalidArgs("preset must be smallest, balanced or high-quality".into()))?,
+                };
+                let (bytes, r) = self.session.optimized_bytes(id, &pdfcraft_engine::optimize::Settings::reduce(preset), &[]).map_err(failed)?;
                 // As in the app, a copy that isn't smaller is not written (#490).
                 let written = bytes.len() < before;
                 if written {
                     write_atomic(&path, &bytes)?;
                 }
-                json!({ "path": path.to_string_lossy(), "written": written, "bytes_before": before, "bytes_after": bytes.len(), "merged_objects": merged })
+                json!({
+                    "path": path.to_string_lossy(),
+                    "preset": preset.id(),
+                    "written": written,
+                    "bytes_before": before,
+                    "bytes_after": bytes.len(),
+                    "images_unsupported": r.optimize.images_unsupported,
+                    "merged_objects": r.merged,
+                })
+            }
+            "doc_reduce_estimate" => {
+                let id = self.doc(&a)?.id;
+                let now = self.doc(&a)?.bytes.len();
+                let mut estimates = serde_json::Map::new();
+                for preset in pdfcraft_engine::optimize::ReducePreset::ALL {
+                    let (bytes, _) = self.session.optimized_bytes(id, &pdfcraft_engine::optimize::Settings::reduce(preset), &[]).map_err(failed)?;
+                    estimates.insert(preset.id().into(), json!(bytes.len()));
+                }
+                json!({ "bytes_now": now, "estimates": estimates })
             }
             "doc_optimize" => self.doc_optimize(&a)?,
             "doc_initial_view" => self.doc_initial_view(&a)?,

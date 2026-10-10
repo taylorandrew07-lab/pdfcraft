@@ -3917,3 +3917,41 @@ fn text_extract_with_a_rect_takes_one_column() {
         assert!(matches!(e, ToolError::InvalidArgs(_)), "{bad}: {e}");
     }
 }
+
+#[test]
+fn reducing_with_a_preset_through_tools() {
+    let dir = workdir("reduce-presets");
+    // A 1800 × 1200 photo-like JPEG at 600 dpi: a 3 × 2 inch page.
+    let (w, h) = (1800u32, 1200u32);
+    let px: Vec<u8> = (0..w * h)
+        .flat_map(|i| {
+            let (x, y) = (i % w, i / w);
+            [(x * 255 / w) as u8 ^ ((x * y) & 15) as u8, (y * 255 / h) as u8, ((x + y) & 255) as u8]
+        })
+        .collect();
+    let mut jpeg = Vec::new();
+    let mut enc = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut jpeg, 95);
+    enc.set_pixel_density(image::codecs::jpeg::PixelDensity::dpi(600));
+    enc.encode(&px, w, h, image::ExtendedColorType::Rgb8).unwrap();
+    std::fs::write(dir.join("photo.jpg"), &jpeg).unwrap();
+    let mut a = auto(&dir);
+    let doc = ok(&mut a, "doc_create", json!({ "from": "images", "paths": ["photo.jpg"] }))["doc"].as_u64().unwrap();
+    let mut sizes = Vec::new();
+    for preset in ["smallest", "balanced", "high-quality"] {
+        let r = ok(&mut a, "doc_reduce", json!({ "doc": doc, "path": format!("{preset}.pdf"), "preset": preset }));
+        assert_eq!((r["preset"].as_str(), r["written"].as_bool(), r["images_unsupported"].as_u64()), (Some(preset), Some(true), Some(0)), "{r}");
+        sizes.push(r["bytes_after"].as_u64().unwrap());
+    }
+    assert!(sizes[0] < sizes[1] && sizes[1] < sizes[2], "smaller files for smaller presets: {sizes:?}");
+    // Balanced is the default.
+    let r = ok(&mut a, "doc_reduce", json!({ "doc": doc, "path": "default.pdf" }));
+    assert_eq!((r["preset"].as_str(), r["bytes_after"].as_u64()), (Some("balanced"), Some(sizes[1])));
+    assert!(matches!(a.call("doc_reduce", &json!({ "doc": doc, "path": "x.pdf", "preset": "tiny" })), Err(ToolError::InvalidArgs(_))));
+    // The estimates are those sizes, and nothing is written.
+    let files = std::fs::read_dir(&dir).unwrap().count();
+    let e = ok(&mut a, "doc_reduce_estimate", json!({ "doc": doc }));
+    let got: Vec<u64> = ["smallest", "balanced", "high-quality"].iter().map(|p| e["estimates"][p].as_u64().unwrap()).collect();
+    assert_eq!(got, sizes, "{e}");
+    assert!(e["bytes_now"].as_u64().unwrap() > sizes[2]);
+    assert_eq!(std::fs::read_dir(&dir).unwrap().count(), files);
+}

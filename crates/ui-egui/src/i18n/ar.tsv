@@ -254,6 +254,25 @@
 	Fill & Sign: initials	تعبئة وتوقيع: أحرف أولى
 	Export to image…	تصدير إلى صورة…
 	Reduce file size…	تقليل حجم الملف…
+	Smallest	الأصغر
+	Balanced	متوازن
+	High quality	جودة عالية
+	For email and screens	للبريد الإلكتروني والشاشات
+	Good for most documents	مناسب لمعظم المستندات
+	For printing	للطباعة
+	Images at 100 ppi, lower quality	صور بدقة 100 ppi، جودة أقل
+	Images at 150 ppi, medium quality	صور بدقة 150 ppi، جودة متوسطة
+	Images at 225 ppi, high quality	صور بدقة 225 ppi، جودة عالية
+	{name} · {size} now	{name} · {size} حاليًا
+	Advanced…	خيارات متقدمة…
+	Reduce	تقليل
+	Still over 25 MB, the usual email limit.	لا يزال أكبر من 25 MB، وهو الحد المعتاد للبريد الإلكتروني.
+	Still over 25 MB, the usual email limit. Try Smallest.	لا يزال أكبر من 25 MB، وهو الحد المعتاد للبريد الإلكتروني. جرّب «الأصغر».
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} صورة تُركت كما هي: لا يستطيع PdfCraft بعد إعادة ضغط تنسيقها.|{n} صورة تُركت كما هي: لا يستطيع PdfCraft بعد إعادة ضغط تنسيقها.|{n} صورتان تُركتا كما هما: لا يستطيع PdfCraft بعد إعادة ضغط تنسيقهما.|{n} صور تُركت كما هي: لا يستطيع PdfCraft بعد إعادة ضغط تنسيقها.|{n} صورة تُركت كما هي: لا يستطيع PdfCraft بعد إعادة ضغط تنسيقها.|{n} صورة تُركت كما هي: لا يستطيع PdfCraft بعد إعادة ضغط تنسيقها.
+	estimating…	جارٍ التقدير…
+	about {size}	نحو {size}
+	no smaller	ليس أصغر
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	هذا الخيار لن يجعل الملف أصغر ({size}). لم تُحفظ أي نسخة.
 	Optimize PDF…	تحسين PDF…
 	Export to text…	تصدير إلى نص…
 	Export to Word…	تصدير إلى Word…

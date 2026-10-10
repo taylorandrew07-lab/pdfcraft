@@ -247,6 +247,25 @@
 	Fill & Sign: initials	Rellenar y firmar: iniciales
 	Export to image…	Exportar a imagen…
 	Reduce file size…	Reducir tamaño del archivo…
+	Smallest	Lo más pequeño
+	Balanced	Equilibrado
+	High quality	Alta calidad
+	For email and screens	Para correo electrónico y pantalla
+	Good for most documents	Adecuado para la mayoría de los documentos
+	For printing	Para imprimir
+	Images at 100 ppi, lower quality	Imágenes a 100 ppp, menor calidad
+	Images at 150 ppi, medium quality	Imágenes a 150 ppp, calidad media
+	Images at 225 ppi, high quality	Imágenes a 225 ppp, alta calidad
+	{name} · {size} now	{name} · {size} ahora
+	Advanced…	Avanzado…
+	Reduce	Reducir
+	Still over 25 MB, the usual email limit.	Sigue superando los 25 MB, el límite habitual del correo electrónico.
+	Still over 25 MB, the usual email limit. Try Smallest.	Sigue superando los 25 MB, el límite habitual del correo electrónico. Pruebe «Lo más pequeño».
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} imagen se dejó como estaba: PdfCraft aún no puede recomprimir su formato.|{n} imágenes se dejaron como estaban: PdfCraft aún no puede recomprimir su formato.
+	estimating…	estimando…
+	about {size}	unos {size}
+	no smaller	no más pequeño
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	Esta opción no reduciría el archivo ({size}). No se guardó ninguna copia.
 	Optimize PDF…	Optimizar PDF…
 	Export to text…	Exportar a texto…
 	Export to Word…	Exportar a Word…

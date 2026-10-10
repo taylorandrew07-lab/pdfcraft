@@ -1695,6 +1695,25 @@
 	Privacy	隱私
 	Export to image…	匯出為圖片…
 	Reduce file size…	縮小檔案大小…
+	Smallest	最小
+	Balanced	平衡
+	High quality	高品質
+	For email and screens	適合電子郵件和螢幕
+	Good for most documents	適合大多數文件
+	For printing	適合列印
+	Images at 100 ppi, lower quality	影像 100 ppi，較低品質
+	Images at 150 ppi, medium quality	影像 150 ppi，中等品質
+	Images at 225 ppi, high quality	影像 225 ppi，高品質
+	{name} · {size} now	{name} · 目前 {size}
+	Advanced…	進階…
+	Reduce	縮小
+	Still over 25 MB, the usual email limit.	仍超過 25 MB（常見的電子郵件附件上限）。
+	Still over 25 MB, the usual email limit. Try Smallest.	仍超過 25 MB（常見的電子郵件附件上限）。請試試「最小」。
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} 個影像維持原樣：PdfCraft 目前還無法重新壓縮其格式。
+	estimating…	正在估算…
+	about {size}	約 {size}
+	no smaller	不會更小
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	此選項不會使檔案更小（{size}）。未儲存副本。
 	Optimize PDF…	最佳化 PDF…
 	Export to text…	匯出為文字…
 	Export to Word…	匯出為 Word…

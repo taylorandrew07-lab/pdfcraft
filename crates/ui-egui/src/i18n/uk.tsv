@@ -252,6 +252,25 @@
 	Fill & Sign: initials	Заповнення й підпис: ініціали
 	Export to image…	Експортувати в зображення…
 	Reduce file size…	Зменшити розмір файлу…
+	Smallest	Найменший
+	Balanced	Збалансований
+	High quality	Висока якість
+	For email and screens	Для пошти й екрана
+	Good for most documents	Підходить для більшості документів
+	For printing	Для друку
+	Images at 100 ppi, lower quality	Зображення 100 ppi, нижча якість
+	Images at 150 ppi, medium quality	Зображення 150 ppi, середня якість
+	Images at 225 ppi, high quality	Зображення 225 ppi, висока якість
+	{name} · {size} now	{name} · зараз {size}
+	Advanced…	Додатково…
+	Reduce	Зменшити
+	Still over 25 MB, the usual email limit.	Досі понад 25 МБ — звичайне обмеження пошти.
+	Still over 25 MB, the usual email limit. Try Smallest.	Досі понад 25 МБ — звичайне обмеження пошти. Спробуйте «Найменший».
+@plural	{n} image was left as it is: PdfCraft can't recompress its format yet.|{n} images were left as they are: PdfCraft can't recompress their format yet.	{n} зображення залишено як є: PdfCraft поки не вміє перестискати його формат.|{n} зображення залишено як є: PdfCraft поки не вміє перестискати їхній формат.|{n} зображень залишено як є: PdfCraft поки не вміє перестискати їхній формат.
+	estimating…	оцінювання…
+	about {size}	близько {size}
+	no smaller	не менше
+	This choice wouldn't make the file smaller ({size}). No copy was saved.	Цей варіант не зменшить файл ({size}). Копію не збережено.
 	Optimize PDF…	Оптимізувати PDF…
 	Export to text…	Експортувати в текст…
 	Export to Word…	Експортувати у Word…
